@@ -2,15 +2,6 @@ apply plugin: 'org.jetbrains.kotlin.jvm'
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'com.vanniktech.maven.publish'
 
-gradlePlugin {
-  plugins {
-    paparazzi {
-      id = 'app.cash.paparazzi'
-      implementationClass = 'app.cash.paparazzi.gradle.PaparazziPlugin'
-    }
-  }
-}
-
 dependencies {
   compileOnly gradleApi()
   implementation platform(deps.kotlin.bom)
@@ -22,6 +13,28 @@ dependencies {
 
   testImplementation deps.junit
   testImplementation deps.truth
+}
+
+test {
+  dependsOn(':paparazzi:publishMavenPublicationToProjectLocalMavenRepository')
+  dependsOn(':paparazzi-agent:publishMavenPublicationToProjectLocalMavenRepository')
+
+  testLogging {
+    events 'passed', 'failed', 'skipped'
+    exceptionFormat 'full'
+    showExceptions true
+    showStackTraces true
+    showCauses true
+  }
+}
+
+gradlePlugin {
+  plugins {
+    paparazzi {
+      id = 'app.cash.paparazzi'
+      implementationClass = 'app.cash.paparazzi.gradle.PaparazziPlugin'
+    }
+  }
 }
 
 sourceSets {
@@ -50,18 +63,6 @@ tasks.named('compileKotlin').configure {
   it.dependsOn(generateVersion)
 }
 
-test {
-  dependsOn(':paparazzi:publishMavenPublicationToProjectLocalMavenRepository')
-  dependsOn(':paparazzi-agent:publishMavenPublicationToProjectLocalMavenRepository')
-
-  testLogging {
-    events 'passed', 'failed', 'skipped'
-    exceptionFormat 'full'
-    showExceptions true
-    showStackTraces true
-    showCauses true
-  }
-}
 
 // When cleaning this project, we also want to clean the test projects.
 tasks.named("clean").configure { cleaner ->

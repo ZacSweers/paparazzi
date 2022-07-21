@@ -1,6 +1,5 @@
 rootProject.name = 'paparazzi-parent'
 
-include ':sample'
 include ':paparazzi'
 include ':paparazzi-agent'
 include ':paparazzi-gradle-plugin'

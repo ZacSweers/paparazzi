@@ -1,0 +1,9 @@
+rootProject.name = 'sample'
+
+includeBuild('..') {
+  dependencySubstitution {
+//    substitute module('app.cash.paparazzi:paparazzi') with project(':paparazzi')
+//    substitute module('app.cash.paparazzi:paparazzi-agent') with project(':paparazzi-agent')
+    substitute module('app.cash.paparazzi:paparazzi-gradle-plugin') with project(':paparazzi-gradle-plugin')
+  }
+}
