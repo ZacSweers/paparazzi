@@ -20,12 +20,14 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import app.cash.paparazzi.Paparazzi
+import app.cash.paparazzi.rule.PaparazziRule
+import app.cash.paparazzi.rule.PaparazziRule.Companion.paparazziRule
 import org.junit.Rule
 import org.junit.Test
 
 class KeypadViewTest {
   @get:Rule
-  val paparazzi = Paparazzi()
+  val paparazzi = paparazziRule()
 
   @Test
   fun testViews() {

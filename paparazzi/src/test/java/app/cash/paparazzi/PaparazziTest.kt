@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
 
 class PaparazziTest {
   @get:Rule
-  val paparazzi = Paparazzi()
+  val paparazzi = PaparazziCore()
 
   @Test
   fun drawCalls() {
@@ -157,6 +157,6 @@ class PaparazziTest {
 
   private val time: Long
     get() {
-      return TimeUnit.NANOSECONDS.toMillis(System_Delegate.nanoTime() - Paparazzi.TIME_OFFSET_NANOS)
+      return TimeUnit.NANOSECONDS.toMillis(System_Delegate.nanoTime() - PaparazziCore.TIME_OFFSET_NANOS)
     }
 }

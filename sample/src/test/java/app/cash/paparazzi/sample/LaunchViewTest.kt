@@ -20,12 +20,13 @@ import app.cash.paparazzi.DeviceConfig.Companion.NEXUS_5
 import app.cash.paparazzi.DeviceConfig.Companion.NEXUS_5_LAND
 import app.cash.paparazzi.DeviceConfig.Companion.PIXEL_3
 import app.cash.paparazzi.Paparazzi
+import app.cash.paparazzi.rule.PaparazziRule.Companion.paparazziRule
 import org.junit.Rule
 import org.junit.Test
 
 class LaunchViewTest {
   @get:Rule
-  val paparazzi = Paparazzi(deviceConfig = PIXEL_3)
+  val paparazzi = paparazziRule(deviceConfig = PIXEL_3)
 
   @Test
   fun pixel3() {

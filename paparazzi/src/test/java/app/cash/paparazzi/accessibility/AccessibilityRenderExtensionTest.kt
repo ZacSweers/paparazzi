@@ -12,7 +12,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import app.cash.paparazzi.DeviceConfig
-import app.cash.paparazzi.Paparazzi
+import app.cash.paparazzi.PaparazziCore
 import app.cash.paparazzi.Snapshot
 import app.cash.paparazzi.SnapshotHandler
 import app.cash.paparazzi.internal.ImageUtils
@@ -26,7 +26,7 @@ class AccessibilityRenderExtensionTest {
   private val snapshotHandler = TestSnapshotVerifier()
 
   @get:Rule
-  val paparazzi = Paparazzi(
+  val paparazzi = PaparazziCore(
     deviceConfig = DeviceConfig.NEXUS_5.copy(
       // Needed to render accessibility content next to main content.
       screenWidth = DeviceConfig.NEXUS_5.screenWidth * 2,

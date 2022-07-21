@@ -3,6 +3,7 @@ package app.cash.paparazzi.sample
 import android.widget.LinearLayout
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
+import app.cash.paparazzi.rule.PaparazziRule.Companion.paparazziRule
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import org.junit.Rule
@@ -27,7 +28,7 @@ class TestParameterInjectorTest(
   }
 
   @get:Rule
-  val paparazzi = Paparazzi(deviceConfig = config.deviceConfig)
+  val paparazzi = paparazziRule(deviceConfig = config.deviceConfig)
 
   @Test
   fun simple() {

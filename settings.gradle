@@ -11,3 +11,4 @@ include ':libs:native-win'
 include ':libs:native-linux'
 
 enableFeaturePreview('TYPESAFE_PROJECT_ACCESSORS')
+include ':paparazzi-rule'

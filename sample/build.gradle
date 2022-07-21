@@ -11,4 +11,5 @@ android {
 
 dependencies {
   testImplementation deps.testparameterinjector
+  testImplementation "app.cash.paparazzi:paparazzi-rule:1.1.0-SNAPSHOT"
 }
