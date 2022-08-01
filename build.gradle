@@ -19,8 +19,10 @@ buildscript {
     // Normally you would declare a version here, but we use dependency substitution in
     // settings.gradle to use the version built from inside the repo.
     classpath 'app.cash.paparazzi:paparazzi-gradle-plugin'
+    classpath "com.autonomousapps:dependency-analysis-gradle-plugin:1.11.2"
   }
 }
+apply plugin: "com.autonomousapps.dependency-analysis"
 
 subprojects {
   repositories {
