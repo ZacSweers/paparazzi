@@ -28,11 +28,10 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
-import org.gradle.api.attributes.Attribute
-import org.gradle.api.internal.artifacts.ArtifactAttributes
 import org.gradle.api.internal.artifacts.transform.UnzipTransform
 import org.gradle.api.logging.LogLevel.LIFECYCLE
 import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.options.Option
 import org.gradle.api.tasks.testing.Test
@@ -63,7 +62,7 @@ class PaparazziPlugin : Plugin<Project> {
   }
 
   private fun setupPaparazzi(project: Project) {
-    val unzipConfiguration = project.setupPlatformDataTransform()
+    val nativePlatformConfiguration = project.setupPlatformDataTransform()
 
     // Create anchor tasks for all variants.
     val verifyVariants = project.tasks.register("verifyPaparazzi")
@@ -81,15 +80,26 @@ class PaparazziPlugin : Plugin<Project> {
       val reportOutputDir = project.layout.buildDirectory.dir("reports/paparazzi")
       val snapshotOutputDir = project.layout.projectDirectory.dir("src/test/snapshots")
 
-      val packageAwareArtifacts = project.configurations.getByName("${variant.name}RuntimeClasspath")
+      val packageAwareArtifacts = project.configurations
+        .getByName("${variant.name}RuntimeClasspath")
         .incoming
         .artifactView {
           it.attributes.attribute(
-            Attribute.of("artifactType", String::class.java),
+            ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
             "android-symbol-with-package-name"
           )
         }
         .artifacts
+
+      val nativePlatformFiles = nativePlatformConfiguration
+        .incoming
+        .artifactView {
+          it.attributes.attribute(
+            ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
+            ArtifactTypeDefinition.DIRECTORY_TYPE
+          )
+        }
+        .files
 
       val writeResourcesTask = project.tasks.register(
         "preparePaparazzi${variantSlug}Resources",
@@ -106,7 +116,6 @@ class PaparazziPlugin : Plugin<Project> {
         task.targetSdkVersion.set(android.targetSdkVersion())
         task.compileSdkVersion.set(android.compileSdkVersion())
         task.mergeAssetsOutput.set(mergeAssetsOutputDir)
-        task.platformDataRoot.set(unzipConfiguration.singleFile)
         task.paparazziResources.set(project.layout.buildDirectory.file("intermediates/paparazzi/${variant.name}/resources.txt"))
       }
 
@@ -155,6 +164,9 @@ class PaparazziPlugin : Plugin<Project> {
 
         test.inputs.dir(mergeResourcesOutputDir)
         test.inputs.dir(mergeAssetsOutputDir)
+        test.inputs.files(nativePlatformFiles)
+          .withPathSensitivity(PathSensitivity.NONE)
+
         test.outputs.dir(reportOutputDir)
         test.outputs.dir(snapshotOutputDir)
 
@@ -164,6 +176,8 @@ class PaparazziPlugin : Plugin<Project> {
         // why not a lambda?  See: https://docs.gradle.org/7.2/userguide/validation_problems.html#implementation_unknown
         test.doFirst(object : Action<Task> {
           override fun execute(t: Task) {
+            test.systemProperties["paparazzi.platform.data.root"] =
+              nativePlatformFiles.singleFile.absolutePath
             test.systemProperties["paparazzi.test.record"] = isRecordRun.get()
             test.systemProperties["paparazzi.test.verify"] = isVerifyRun.get()
             test.systemProperties.putAll(paparazziProperties)
@@ -202,12 +216,8 @@ class PaparazziPlugin : Plugin<Project> {
       dependencies.create("app.cash.paparazzi:paparazzi:$VERSION")
     )
 
-    val unzipConfiguration = configurations.create("unzip")
-    unzipConfiguration.attributes.attribute(
-      ArtifactAttributes.ARTIFACT_FORMAT,
-      ArtifactTypeDefinition.DIRECTORY_TYPE
-    )
-    configurations.add(unzipConfiguration)
+    val nativePlatformConfiguration = configurations.create("nativePlatform")
+    configurations.add(nativePlatformConfiguration)
 
     val operatingSystem = OperatingSystem.current()
     val nativeLibraryArtifactId = when {
@@ -218,18 +228,21 @@ class PaparazziPlugin : Plugin<Project> {
       operatingSystem.isWindows -> "win"
       else -> "linux"
     }
-    unzipConfiguration.dependencies.add(
+    nativePlatformConfiguration.dependencies.add(
       dependencies.create("app.cash.paparazzi:layoutlib-native-$nativeLibraryArtifactId:$NATIVE_LIB_VERSION")
     )
     dependencies.registerTransform(UnzipTransform::class.java) { transform ->
-      transform.from.attribute(ArtifactAttributes.ARTIFACT_FORMAT, ArtifactTypeDefinition.JAR_TYPE)
+      transform.from.attribute(
+        ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
+        ArtifactTypeDefinition.JAR_TYPE
+      )
       transform.to.attribute(
-        ArtifactAttributes.ARTIFACT_FORMAT,
+        ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
         ArtifactTypeDefinition.DIRECTORY_TYPE
       )
     }
 
-    return unzipConfiguration
+    return nativePlatformConfiguration
   }
 
   private fun BaseExtension.packageName(): String {
