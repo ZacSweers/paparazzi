@@ -564,6 +564,14 @@ class Paparazzi @JvmOverloads constructor(
       .apply { isAccessible = true }
       .get(dispatcher) as ArrayDeque<*>
     toRunTrampolined.clear()
+    dispatcher.javaClass
+      .getDeclaredField("scheduledTrampolineDispatch")
+      .apply { isAccessible = true }
+      .set(dispatcher, false)
+    dispatcher.javaClass
+      .getDeclaredField("scheduledFrameDispatch")
+      .apply { isAccessible = true }
+      .set(dispatcher, false)
   }
 
   private class PaparazziComposeOwner private constructor() : LifecycleOwner, SavedStateRegistryOwner {
