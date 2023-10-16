@@ -1,9 +1,11 @@
 import org.jetbrains.kotlin.gradle.plugin.AbstractKotlinPluginKt
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 apply plugin: 'org.jetbrains.kotlin.jvm'
 apply plugin: 'org.jetbrains.dokka'
 apply plugin: 'com.vanniktech.maven.publish'
 apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 java {
   sourceCompatibility = libs.versions.javaTarget.get()
@@ -17,6 +19,9 @@ configurations {
     attributes.attribute(artifactType, ArtifactTypeDefinition.DIRECTORY_TYPE)
   }
 }
+
+Configuration shade = configurations.maybeCreate("compileShaded")
+configurations.getByName("compileOnly").extendsFrom(shade)
 
 dependencies {
   registerTransform(org.gradle.api.internal.artifacts.transform.UnzipTransform) {
@@ -40,17 +45,29 @@ dependencies {
 
   implementation libs.trove4j
   api libs.layoutlib.native.jdk11
-  api libs.tools.common
+  api(libs.tools.common) {
+    exclude group: "com.google.guava"
+  }
   api libs.tools.layoutlib
-  api libs.tools.ninepatch
-  api libs.tools.sdkCommon
+  api(libs.tools.ninepatch) {
+    exclude group: "com.google.guava"
+  }
+  api(libs.tools.sdkCommon) {
+    exclude group: "com.google.guava"
+  }
   api libs.kxml2
   api libs.junit
   api libs.androidx.annotations
-  api libs.guava
   api libs.kotlinx.coroutines.core
   api libs.okio
   api platform(libs.kotlin.bom)
+  compileShaded(libs.guava) {
+    // Misc annotations-only deps that we don't need
+    exclude group: "org.checkerframework"
+    exclude group: "com.google.errorprone"
+    exclude group: "com.google.j2objc"
+    exclude group: "com.google.code.findbugs"
+  }
   implementation libs.moshi.core
   implementation libs.moshi.adapters
   implementation libs.jcodec.core
@@ -76,6 +93,20 @@ dependencies {
   testImplementation libs.truth
 
   add(AbstractKotlinPluginKt.PLUGIN_CLASSPATH_CONFIGURATION_NAME, libs.compose.compiler)
+}
+
+TaskProvider<ShadowJar> shadowJar = tasks.named("shadowJar", ShadowJar) {
+  archiveClassifier.set("")
+  configurations = [shade]
+  relocate("com.google.common", "app.cash.paparazzi.shaded.com.google.common")
+  relocate("com.google.thirdparty", "app.cash.paparazzi.shaded.com.google.thirdparty")
+  exclude("META-INF/maven/**")
+  exclude("META-INF/proguard/**")
+}
+
+artifacts {
+  runtimeOnly(shadowJar)
+  archives(shadowJar)
 }
 
 tasks.named("dokkaGfm").configure {

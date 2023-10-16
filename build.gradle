@@ -17,6 +17,7 @@ buildscript {
     classpath libs.plugin.spotless
     classpath libs.plugin.buildConfig
     classpath libs.plugin.ksp
+    classpath libs.plugin.mavenShadow
     classpath libs.grgit
 
     // Normally you would declare a version here, but we use dependency substitution in
